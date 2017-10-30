@@ -27,6 +27,7 @@ data TPat a = TPat_Atom a
             | TPat_Slow Time (TPat a)
             | TPat_Zoom Arc (TPat a)
             | TPat_DegradeBy Double (TPat a)
+            | TPat_Just (TPat a)
             | TPat_Silence
             | TPat_Foot
             | TPat_Elongate Int
@@ -104,6 +105,16 @@ instance Parseable Rational where
   parseTPat = parseRhythm pRational
   fromTo a b = enumFromTo' a b
   fromThenTo a b c = enumFromThenTo' a b c
+
+instance Parseable (Maybe String) where
+  parseTPat = parseRhythm (pMaybe pString)
+  fromTo a b = listToPat $ [a,b]
+  fromThenTo a b c = listToPat [a,b,c]
+
+instance Parseable (Maybe Int) where
+  parseTPat = parseRhythm (pMaybe parseIntNote)
+  fromTo a b = listToPat $ [a,b]
+  fromThenTo a b c = listToPat [a,b,c]
 
 enumFromTo' a b | a > b = listToPat $ reverse $ enumFromTo b a
                 | otherwise = listToPat $ enumFromTo a b
@@ -263,6 +274,12 @@ pString = do c <- (letter <|> oneOf "0123456789") <?> "charnum"
 pVocable :: Parser (TPat String)
 pVocable = do v <- pString
               return $ TPat_Atom v
+
+pMaybe :: Parser a -> Parser (TPat (Maybe a))
+pMaybe p = do symbol "~" <?> "rest"
+              return $ TPat_Atom Nothing
+           <|> do v <- p
+                  return $ TPat_Atom $ Just v
 
 pDouble :: Parser (TPat Double)
 pDouble = do nf <- intOrFloat <?> "float"
