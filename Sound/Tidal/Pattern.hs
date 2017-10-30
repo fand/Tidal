@@ -115,6 +115,15 @@ instance (RealFloat a) => RealFloat (Pattern a) where
   isIEEE         = noOv "isIEEE"
   atan2          = liftA2 atan2
 
+instance Num a => Num (Maybe a) where
+  (+) = liftA2 (+)
+  (-) = liftA2 (-)
+  (*) = liftA2 (*)
+  abs = fmap abs
+  signum = fmap signum
+  negate = fmap negate
+  fromInteger = pure . fromInteger
+
 -- | @show (p :: Pattern)@ returns a text string representing the
 -- event values active during the first cycle of the given pattern.
 instance (Show a) => Show (Pattern a) where
